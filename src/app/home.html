@@ -39,6 +39,15 @@
       <ion-input type="text"></ion-input>
     </ion-item>
 
+    <ion-item>
+      <button item-left ion-button (click)="chooseFile()" color="light">File</button>
+      <ion-label>...{{chosenFile | slice:-37}}</ion-label>
+    </ion-item>
+
   </ion-list>
-  <button ion-button (click)="pickFile()">Pick File</button>
+
+  <button ion-button (click)="archive()">Archive it!</button>
+  <ion-label>{{ status ? status + " " + progress*100 + "% (" + task + ")" : "" }}</ion-label>
+
+
 </ion-content>
