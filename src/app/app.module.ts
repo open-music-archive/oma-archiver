@@ -6,8 +6,8 @@ import { SplashScreen } from '@ionic-native/splash-screen';
 import { StatusBar } from '@ionic-native/status-bar';
 
 import { MyApp } from './app.component';
-import { HomePage } from '../pages/home/home';
-import { ElectronProvider } from '../providers/electron/electron';
+import { HomePage } from './home';
+import { ElectronService } from './services/electron-service';
 import { FeatureService } from './services/feature-service';
 
 @NgModule({
@@ -29,7 +29,7 @@ import { FeatureService } from './services/feature-service';
     StatusBar,
     SplashScreen,
     {provide: ErrorHandler, useClass: IonicErrorHandler},
-    ElectronProvider,
+    ElectronService,
     FeatureService
   ]
 })
