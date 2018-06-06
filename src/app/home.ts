@@ -26,10 +26,14 @@ export class HomePage implements ProgressObserver {
     }
   }
 
-  archive() {
+  async archive() {
     if (this.chosenFile) {
       this.status = "extracting features";
-      this.features.extractFeatures(this.chosenFile, this);
+      await this.features.extractFeatures(this.chosenFile, this);
+      this.status = "aggregating and summarizing features";
+      const fragments = this.features.getFragmentsAndSummarizedFeatures(this.chosenFile);
+      this.status = "done!"
+      console.log(fragments);
     }
   }
 
