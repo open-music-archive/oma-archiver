@@ -16,6 +16,7 @@ export class HomePage implements ProgressObserver {
   private status = "";
   private task = "";
   private progress = 0;
+  private statusText = "";
 
   constructor(private electron: ElectronService, private features: FeatureService) {}
 
@@ -28,18 +29,32 @@ export class HomePage implements ProgressObserver {
 
   async archive() {
     if (this.chosenFile) {
-      this.status = "extracting features";
+      this.setStatus("extracting features");
       await this.features.extractFeatures(this.chosenFile, this);
-      this.status = "aggregating and summarizing features";
+      this.setStatus("aggregating and summarizing features");
       const fragments = this.features.getFragmentsAndSummarizedFeatures(this.chosenFile);
-      this.status = "done!"
-      console.log(fragments);
+      this.setStatus("done!");
     }
+  }
+
+  private setStatus(status: string) {
+    this.status = status;
+    this.updateProgress(null, null); //resets progress and updates text
   }
 
   updateProgress(ratio: number, task: string): void {
     this.progress = ratio;
     this.task = task;
+    this.updateStatusText();
+  }
+
+  private updateStatusText() {
+    let progressText = "";
+    if (this.progress != null) {
+      progressText += " "+Math.round(this.progress*100)+"%";
+      progressText += this.task ? " ("+this.task+")" : "";
+    }
+    this.statusText = this.status+" "+progressText;
   }
 
 }

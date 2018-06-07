@@ -10,7 +10,7 @@ import { ProgressObserver } from '../home';
 const FEATURE_FOLDER = './features/';
 const FEATURES = {beats:'vamp:qm-vamp-plugins:qm-barbeattracker:beats', onset:'vamp:qm-vamp-plugins:qm-onsetdetector:onsets', amp:'vamp:vamp-example-plugins:amplitudefollower:amplitude', chroma:'vamp:qm-vamp-plugins:qm-chromagram:chromagram', centroid:'vamp:vamp-example-plugins:spectralcentroid:logcentroid', mfcc:'vamp:qm-vamp-plugins:qm-mfcc:coefficients', melody:'vamp:mtg-melodia:melodia:melody', pitch:'vamp:vamp-aubio:aubiopitch:frequency'};
 const FEATURE_SELECTION = [FEATURES.beats, FEATURES.amp, FEATURES.mfcc, FEATURES.chroma];//[FEATURES.onset, FEATURES.amp, FEATURES.pitch, FEATURES.mfcc, FEATURES.chroma];
-//const SHORT_FEATURE_SELECTION = FEATURE_SELECTION.map(function(f){return f.slice(f.lastIndexOf(':')+1);});
+const FEATURE_NAMES = FEATURE_SELECTION.map(f => f.slice(f.lastIndexOf(':')+1));
 
 
 @Injectable()
@@ -47,15 +47,16 @@ export class FeatureService {
 
   getFragmentsAndSummarizedFeatures(path: string, fragmentLength?: number): number[][] {
     var files = fs.readdirSync(FEATURE_FOLDER);
-    var name = path.replace('.wav', '');
-    //files = files.filter(f => f.indexOf(name+'_') == 0 && SHORT_FEATURE_SELECTION.indexOf(f.slice(f.lastIndexOf('_')+1, f.lastIndexOf('.'))) >= 0);
+    var name = path.replace('.wav', '').slice(path.lastIndexOf('/')+1);
+    //take files that match file name and active features
+    files = files.filter(f => f.indexOf(name+'_') == 0);
+    files = files.filter(f => FEATURE_NAMES.indexOf(f.slice(f.lastIndexOf('_')+1, f.lastIndexOf('.'))) >= 0);
     files = files.map(f => FEATURE_FOLDER+f);
     if (files.length < FEATURE_SELECTION.length) {
       //incomplete feature files, return no fragments
       return [];
     }
     var fragments, featureFiles;
-    console.log(path, files, fragments)
     if (isNaN(fragmentLength)) {
       var segmentationFiles = files.filter(f => f.indexOf('onsets') >= 0 || f.indexOf('beats') >= 0);
       featureFiles = files.filter(f => segmentationFiles.indexOf(f) < 0);
@@ -64,11 +65,9 @@ export class FeatureService {
       featureFiles = files.filter(f => f.indexOf('onsets') < 0 && f.indexOf('beats') < 0);
       fragments = this.createFragments(featureFiles[0], fragmentLength);
     }
-    console.log(path, files, fragments)
     for (let i = 0; i < featureFiles.length; i++) {
       this.addSummarizedFeature(featureFiles[i], fragments);
     }
-    console.log(path, files, fragments)
     //remove all fragments that contain undefined features
     for (let i = fragments.length-1; i >= 0; i--) {
       //console.log(fragments[i]["vector"].length);
