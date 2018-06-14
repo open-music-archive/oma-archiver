@@ -1,1 +1,15 @@
-### :point_right: This starter repo has moved to the [ionic-team/starters](https://github.com/ionic-team/starters/tree/master/ionic-angular/official/blank) repo! :point_left:
+## Installation:
+1. clone it, then:
+```bash
+$ npm install
+```
+2. install sonic annotator.
+
+## Running during dev
+```bash
+$ ionic serve --no-open
+```
+in separate bash window:
+```bash
+$ npm start
+```
