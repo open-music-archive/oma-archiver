@@ -1,6 +1,7 @@
 import { Component } from '@angular/core';
 import { ElectronService } from './services/electron-service';
 import { FeatureService } from './services/feature-service';
+import { ApiService } from './services/api-service';
 import { Record } from './types';
 
 export interface ProgressObserver {
@@ -25,7 +26,11 @@ export class HomePage implements ProgressObserver {
   private progress = 0;
   private statusText = "";
 
-  constructor(private electron: ElectronService, private features: FeatureService) {}
+  constructor(
+    private electron: ElectronService,
+    private features: FeatureService,
+    private apiService: ApiService
+  ) {}
 
   chooseFile() {
     const newFile = this.electron.chooseFile();
@@ -50,6 +55,8 @@ export class HomePage implements ProgressObserver {
         soundObjects: fragments
       }
       console.log(JSON.stringify(record, null, 2))
+      this.setStatus("posting record to api");
+      await this.apiService.postRecord(record);
       this.setStatus("done!");
     }
   }

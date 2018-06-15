@@ -9,6 +9,7 @@ import { MyApp } from './app.component';
 import { HomePage } from './home';
 import { ElectronService } from './services/electron-service';
 import { FeatureService } from './services/feature-service';
+import { ApiService } from './services/api-service';
 
 @NgModule({
   declarations: [
@@ -30,7 +31,8 @@ import { FeatureService } from './services/feature-service';
     SplashScreen,
     {provide: ErrorHandler, useClass: IonicErrorHandler},
     ElectronService,
-    FeatureService
+    FeatureService,
+    ApiService
   ]
 })
 export class AppModule {}
