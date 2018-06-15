@@ -5,7 +5,6 @@ export interface Record {
   id: string,
   label: string,
   side: string,
-  fileUri: string,
   soundObjects: Fragment[]
 }
 
@@ -13,6 +12,7 @@ export interface Fragment {
   time: number,
   duration: number,
   vector: number[],
+  fileUri: string,
   features: FeatureSummary[]
 }
 

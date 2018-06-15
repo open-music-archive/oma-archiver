@@ -4,7 +4,7 @@ import * as bb from 'bluebird';
 import * as math from 'mathjs';
 import { exec } from 'child_process';
 import { ProgressObserver } from '../home';
-import { Fragment, FeatureSummary } from '../types';
+import { Fragment } from '../types';
 //typings don't correspond...
 //global.Promise = bb;
 
@@ -94,11 +94,11 @@ export class FeatureService {
   private createFragments(featurepath: string, fragmentLength: number): Fragment[] {
     var json = this.readJsonSync(featurepath);
     var events: Fragment[] = [];
-    //var fileName = json["file_metadata"]["identifiers"]["filename"];
+    var fileName = json["file_metadata"]["identifiers"]["filename"];
     var fileDuration = json["file_metadata"]["duration"];
     for (var i = 0; i < fileDuration; i+=fragmentLength) {
       var duration = i+fragmentLength>fileDuration ? fileDuration-i : fragmentLength;
-      events.push(this.createFragment(i, duration));
+      events.push(this.createFragment(i, fileName, duration));
     }
     return events;
   }
@@ -106,21 +106,21 @@ export class FeatureService {
   private getEventsWithDuration(path: string): Fragment[] {
     var json = this.readJsonSync(path);
     var events: Fragment[] = [];
-    //var fileName = json["file_metadata"]["identifiers"]["filename"];
+    var fileName = json["file_metadata"]["identifiers"]["filename"];
     var fileDuration = json["file_metadata"]["duration"];
     var onsets = json["annotations"][0]["data"].map(function(o){return o["time"];});
     if (onsets[0] > 0) {
-      events.push(this.createFragment(0, onsets[0]));
+      events.push(this.createFragment(0, fileName, onsets[0]));
     }
     for (var i = 0; i < onsets.length; i++) {
       var duration = i<onsets.length-1 ? onsets[i+1]-onsets[i] : fileDuration-onsets[i];
-      events.push(this.createFragment(onsets[i], duration));
+      events.push(this.createFragment(onsets[i], fileName, duration));
     }
     return events;
   }
 
-  private createFragment(time: number, duration: number): Fragment {
-    return {time: time, duration: duration, vector: [], features: []};
+  private createFragment(time: number, fileUri: string, duration: number): Fragment {
+    return {time: time, duration: duration, vector: [], fileUri: fileUri, features: []};
   }
 
   private addSummarizedFeature(path: string, fragments: Fragment[]) {
@@ -140,7 +140,6 @@ export class FeatureService {
       }
       var currentValues = currentData.map(d => d["value"]);
       var means = this.getMean(currentValues);
-      //console.log(currentValues.length)
       var vars = this.getVariance(currentValues);
       f.features.push({
         name: featureName,

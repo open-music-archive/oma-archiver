@@ -47,7 +47,6 @@ export class HomePage implements ProgressObserver {
         id: this.recordId,
         label: this.label,
         side: this.side,
-        fileUri: this.chosenFile,
         soundObjects: fragments
       }
       console.log(JSON.stringify(record, null, 2))
