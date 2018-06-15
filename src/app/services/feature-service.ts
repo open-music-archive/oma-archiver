@@ -4,6 +4,7 @@ import * as bb from 'bluebird';
 import * as math from 'mathjs';
 import { exec } from 'child_process';
 import { ProgressObserver } from '../home';
+import { Fragment, FeatureSummary } from '../types';
 //typings don't correspond...
 //global.Promise = bb;
 
@@ -45,7 +46,7 @@ export class FeatureService {
     )
   }
 
-  getFragmentsAndSummarizedFeatures(path: string, fragmentLength?: number): number[][] {
+  getFragmentsAndSummarizedFeatures(path: string, fragmentLength?: number): Fragment[] {
     var files = fs.readdirSync(FEATURE_FOLDER);
     var name = path.replace('.wav', '').slice(path.lastIndexOf('/')+1);
     //take files that match file name and active features
@@ -56,7 +57,7 @@ export class FeatureService {
       //incomplete feature files, return no fragments
       return [];
     }
-    var fragments, featureFiles;
+    var fragments: Fragment[], featureFiles: string[];
     if (isNaN(fragmentLength)) {
       var segmentationFiles = files.filter(f => f.indexOf('onsets') >= 0 || f.indexOf('beats') >= 0);
       featureFiles = files.filter(f => segmentationFiles.indexOf(f) < 0);
@@ -71,63 +72,64 @@ export class FeatureService {
     //remove all fragments that contain undefined features
     for (let i = fragments.length-1; i >= 0; i--) {
       //console.log(fragments[i]["vector"].length);
-      if (fragments[i]["vector"].filter(function(v) {return v === undefined;}).length > 0) {
+      if (fragments[i].vector.filter(v => v === undefined).length > 0) {
         fragments.splice(i, 1);
       }
     }
     if (fragments.length > 1) {
       //standardize the vectors
-      var vectors = fragments.map(function(f){return f["vector"];});
+      var vectors = fragments.map(f => f.vector);
       var transposed = math.transpose(vectors);
-      var means = transposed.map(function(v){return math.mean(v);});
-      var stds = transposed.map(function(v){return math.std(v);});
+      var means = transposed.map(v => math.mean(v));
+      var stds = transposed.map(v => math.std(v));
       //transposed = transposed.map(function(v,i){return v.map(function(e){return (e-means[i])/stds[i];})});
-      for (var i = fragments.length-1; i >= 0; i--) {
-        fragments[i]["vector"] = fragments[i]["vector"].map(function(e,j){ if (stds[j] != 0) { return (e-means[j])/stds[j] } return e-means[j];});
-      }
+      //iterate backwards by making reverse shallow copy
+      fragments.slice().reverse().forEach(f =>
+        f.vector = f.vector.map((e,j) => stds[j] != 0 ? (e-means[j])/stds[j] : e-means[j])
+      );
     }
     return fragments;
   }
 
-  private createFragments(featurepath, fragmentLength) {
+  private createFragments(featurepath: string, fragmentLength: number): Fragment[] {
     var json = this.readJsonSync(featurepath);
-    var events = [];
-    var fileName = json["file_metadata"]["identifiers"]["filename"];
+    var events: Fragment[] = [];
+    //var fileName = json["file_metadata"]["identifiers"]["filename"];
     var fileDuration = json["file_metadata"]["duration"];
     for (var i = 0; i < fileDuration; i+=fragmentLength) {
       var duration = i+fragmentLength>fileDuration ? fileDuration-i : fragmentLength;
-      events.push(this.createEvent(fileName, i, duration));
+      events.push(this.createFragment(i, duration));
     }
     return events;
   }
 
-  private getEventsWithDuration(path) {
+  private getEventsWithDuration(path: string): Fragment[] {
     var json = this.readJsonSync(path);
-    var events = [];
-    var fileName = json["file_metadata"]["identifiers"]["filename"];
+    var events: Fragment[] = [];
+    //var fileName = json["file_metadata"]["identifiers"]["filename"];
     var fileDuration = json["file_metadata"]["duration"];
     var onsets = json["annotations"][0]["data"].map(function(o){return o["time"];});
     if (onsets[0] > 0) {
-      events.push(this.createEvent(fileName, 0, onsets[0]));
+      events.push(this.createFragment(0, onsets[0]));
     }
     for (var i = 0; i < onsets.length; i++) {
       var duration = i<onsets.length-1 ? onsets[i+1]-onsets[i] : fileDuration-onsets[i];
-      events.push(this.createEvent(fileName, onsets[i], duration));
+      events.push(this.createFragment(onsets[i], duration));
     }
     return events;
   }
 
-  private createEvent(file, time, duration) {
-    return {"file":file, "time":time, "duration":duration, "vector":[]};
+  private createFragment(time: number, duration: number): Fragment {
+    return {time: time, duration: duration, vector: [], features: []};
   }
 
-  private addSummarizedFeature(path, segments) {
+  private addSummarizedFeature(path: string, fragments: Fragment[]) {
     var json = this.readJsonSync(path);
     var featureName = json["annotations"][0]["annotation_metadata"]["annotator"]["output_id"];
     var data = json["annotations"][0]["data"];
-    for (var i = 0; i < segments.length; i++) {
-      var currentOnset = segments[i]["time"];
-      var currentOffset = currentOnset+segments[i]["duration"];
+    fragments.forEach(f => {
+      var currentOnset = f.time;
+      var currentOffset = currentOnset+f.duration;
       var currentData = data.filter(d => currentOnset<=d["time"] && d["time"]<currentOffset);
       if (currentData.length == 0) {
         currentData = data.find(d => currentOnset < d["time"]);
@@ -140,13 +142,13 @@ export class FeatureService {
       var means = this.getMean(currentValues);
       //console.log(currentValues.length)
       var vars = this.getVariance(currentValues);
-      segments[i][featureName+"_mean"] = means;
-      segments[i][featureName+"_var"] = vars;
-      //console.log(Array.isArray(means) ? means.length : 1)
-      segments[i]["vector"] = segments[i]["vector"].concat(Array.isArray(means) ? means : [means]); //see with just means
-      //console.log("v ", segments[i]["vector"].length)
-      //segments[i]["vector"] = segments[i]["vector"].concat(Array.isArray(means) ? means.concat(vars) : [means, vars]);
-    }
+      f.features.push({
+        name: featureName,
+        mean: means,
+        var: vars,
+      });
+      f.vector = f.vector.concat(Array.isArray(means) ? means : [means]); //see with just means
+    });
   }
 
   private getMean(values) {

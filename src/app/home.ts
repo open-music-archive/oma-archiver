@@ -1,6 +1,7 @@
 import { Component } from '@angular/core';
 import { ElectronService } from './services/electron-service';
 import { FeatureService } from './services/feature-service';
+import { Record } from './types';
 
 export interface ProgressObserver {
   updateProgress(ratio: number, task: string): void
@@ -12,6 +13,12 @@ export interface ProgressObserver {
 })
 export class HomePage implements ProgressObserver {
 
+  private title: string;
+  private composer: string;
+  private artist: string;
+  private recordId: string;
+  private label: string;
+  private side: string;
   private chosenFile: string;
   private status = "";
   private task = "";
@@ -33,6 +40,17 @@ export class HomePage implements ProgressObserver {
       await this.features.extractFeatures(this.chosenFile, this);
       this.setStatus("aggregating and summarizing features");
       const fragments = this.features.getFragmentsAndSummarizedFeatures(this.chosenFile);
+      const record: Record = {
+        title: this.title,
+        composer: this.composer,
+        artist: this.artist,
+        id: this.recordId,
+        label: this.label,
+        side: this.side,
+        fileUri: this.chosenFile,
+        soundObjects: fragments
+      }
+      console.log(JSON.stringify(record, null, 2))
       this.setStatus("done!");
     }
   }
