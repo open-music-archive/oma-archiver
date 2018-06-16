@@ -44,7 +44,7 @@ export class HomePage implements ProgressObserver {
       this.setStatus("extracting features");
       await this.features.extractFeatures(this.chosenFile, this);
       this.setStatus("aggregating and summarizing features");
-      const fragments = this.features.getFragmentsAndSummarizedFeatures(this.chosenFile);
+      const fragments = await this.features.getFragmentsAndSummarizedFeatures(this.chosenFile);
       const record: Record = {
         title: this.title,
         composer: this.composer,
