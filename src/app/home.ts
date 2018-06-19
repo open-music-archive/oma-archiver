@@ -1,12 +1,9 @@
 import { Component } from '@angular/core';
 import { ElectronService } from './services/electron-service';
 import { FeatureService } from './services/feature-service';
+import { AudioService } from './services/audio-service';
 import { ApiService } from './services/api-service';
-import { Record } from './types';
-
-export interface ProgressObserver {
-  updateProgress(ratio: number, task: string): void
-}
+import { Record, Fragment, ProgressObserver } from './types';
 
 @Component({
   selector: 'page-home',
@@ -23,12 +20,13 @@ export class HomePage implements ProgressObserver {
   private chosenFile: string;
   private status = "";
   private task = "";
-  private progress = 0;
+  private progress = 0; //progress in [0,1]
   private statusText = "";
 
   constructor(
     private electron: ElectronService,
     private features: FeatureService,
+    private audio: AudioService,
     private apiService: ApiService
   ) {}
 
@@ -41,23 +39,32 @@ export class HomePage implements ProgressObserver {
 
   async archive() {
     if (this.chosenFile) {
-      this.setStatus("extracting features");
-      await this.features.extractFeatures(this.chosenFile, this);
-      this.setStatus("aggregating and summarizing features");
-      const fragments = await this.features.getFragmentsAndSummarizedFeatures(this.chosenFile);
-      const record: Record = {
-        title: this.title,
-        composer: this.composer,
-        artist: this.artist,
-        id: this.recordId,
-        label: this.label,
-        side: this.side,
-        soundObjects: fragments
-      }
-      console.log(JSON.stringify(record, null, 2))
-      this.setStatus("posting record to api");
-      await this.apiService.postRecord(record);
-      this.setStatus("done!");
+      this.archiveFile(this.chosenFile).catch(alert);
+    }
+  }
+
+  private async archiveFile(audioFile: string) {
+    this.setStatus("extracting features");
+    await this.features.extractFeatures(audioFile, this).catch(alert);
+    this.setStatus("aggregating and summarizing features");
+    const fragments = await this.features.getFragmentsAndSummarizedFeatures(this, audioFile);
+    const record = this.createRecord(fragments);
+    this.setStatus("splitting audio");
+    await this.audio.splitWavFile(audioFile, fragments, this).catch(alert);
+    this.setStatus("posting record to api");
+    await this.apiService.postRecord(record).catch(alert);
+    this.setStatus("done!");
+  }
+
+  private createRecord(fragments: Fragment[]): Record {
+    return {
+      title: this.title,
+      composer: this.composer,
+      artist: this.artist,
+      id: this.recordId,
+      label: this.label,
+      side: this.side,
+      soundObjects: fragments
     }
   }
 
@@ -66,8 +73,8 @@ export class HomePage implements ProgressObserver {
     this.updateProgress(null, null); //resets progress and updates text
   }
 
-  updateProgress(ratio: number, task: string): void {
-    this.progress = ratio;
+  updateProgress(task: string, progress?: number): void {
+    this.progress = progress;
     this.task = task;
     this.updateStatusText();
   }

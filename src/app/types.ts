@@ -21,3 +21,7 @@ export interface FeatureSummary {
   mean: number | number[],
   var: number | number[]
 }
+
+export interface ProgressObserver {
+  updateProgress(task: string, progress?: number): void //progress in [0,1]
+}

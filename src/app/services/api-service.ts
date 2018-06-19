@@ -7,10 +7,10 @@ export class ApiService {
   private API_URL = "http://localhost:8060/";//"https://play-it-again.herokuapp.com/";
 
   postRecord(record: Record) {
-    this.postJsonToApi('record', record);
+    return this.postJsonToApi('record', record);
   }
 
-  private async postJsonToApi(path: string, json: {}, params?: {}) {
+  private async postJsonToApi(path: string, json: {}, params?: {}): Promise<string> {
     path = this.addParams(path, params);
     const response = await fetch(this.API_URL+path, {
       method: 'post',

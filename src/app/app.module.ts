@@ -9,6 +9,7 @@ import { MyApp } from './app.component';
 import { HomePage } from './home';
 import { ElectronService } from './services/electron-service';
 import { FeatureService } from './services/feature-service';
+import { AudioService } from './services/audio-service';
 import { ApiService } from './services/api-service';
 
 @NgModule({
@@ -32,6 +33,7 @@ import { ApiService } from './services/api-service';
     {provide: ErrorHandler, useClass: IonicErrorHandler},
     ElectronService,
     FeatureService,
+    AudioService,
     ApiService
   ]
 })

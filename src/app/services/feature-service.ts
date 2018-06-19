@@ -2,12 +2,8 @@ import { Injectable } from '@angular/core';
 import * as fs from 'fs';
 import * as bb from 'bluebird';
 import * as math from 'mathjs';
-import * as wav from 'wav-file-info';
-import { exec } from 'child_process';
-import { ProgressObserver } from '../home';
-import { Fragment } from '../types';
-//typings don't correspond...
-//global.Promise = bb;
+import { Fragment, ProgressObserver } from '../types';
+import * as util from './util';
 
 const FEATURE_FOLDER = './features/';
 const FEATURES = {madmomOnset:'madmom-onsets', beats:'vamp:qm-vamp-plugins:qm-barbeattracker:beats', onset:'vamp:qm-vamp-plugins:qm-onsetdetector:onsets', amp:'vamp:vamp-example-plugins:amplitudefollower:amplitude', chroma:'vamp:qm-vamp-plugins:qm-chromagram:chromagram', centroid:'vamp:vamp-example-plugins:spectralcentroid:logcentroid', mfcc:'vamp:qm-vamp-plugins:qm-mfcc:coefficients', melody:'vamp:mtg-melodia:melodia:melody', pitch:'vamp:vamp-aubio:aubiopitch:frequency'};
@@ -20,52 +16,40 @@ export class FeatureService {
 
   async extractFeatures(path: string, observer: ProgressObserver) {
     if (FEATURE_SELECTION.indexOf(FEATURES.madmomOnset) >= 0) {
-      observer.updateProgress(0/FEATURE_SELECTION.length, "extracting madmom onset");
+      observer.updateProgress("extracting madmom onset", 0/FEATURE_SELECTION.length);
       await this.extractMadmomOnset(path);
     }
     let vampFeatures = FEATURE_SELECTION.filter(f => f.indexOf('vamp') >= 0);
     return bb.mapSeries(vampFeatures, (f,i) =>
       this.extractFeature(path, f)
-        .then(() => observer.updateProgress(i/FEATURE_SELECTION.length, "extracting "+f))
-    ).then(() => observer.updateProgress(1, "extracted features"));
+        .then(() => observer.updateProgress("extracting "+f, i/FEATURE_SELECTION.length))
+    ).then(() => observer.updateProgress("extracted features", 1));
   }
 
   private async extractMadmomOnset(path: string) {
     const destination = this.getFeaturePath(path, FEATURES.madmomOnset, '.csv');
     if (!fs.existsSync(destination)) {
-      await this.execute('CNNOnsetDetector single '+path+' -o '+destination);
+      await util.execute('CNNOnsetDetector single '+path+' -o '+destination);
     }
   }
 
   private async extractFeature(path: string, feature: string): Promise<any> {
     var destination = this.getFeaturePath(path, feature.replace(/:/g, '_'), '.json');
     if (!fs.existsSync(destination)) {
-      await this.execute('sonic-annotator -f -d ' + feature + ' "' + path + '" -w jams --jams-force');
-      await this.execute('mv "'+path.replace('.wav', '')+'.json" "'+destination+'"');
+      await util.execute('sonic-annotator -f -d ' + feature + ' "' + path + '" -w jams --jams-force');
+      await util.execute('mv "'+path.replace('.wav', '')+'.json" "'+destination+'"');
     }
   }
 
   private getFeaturePath(audioPath: string, featureName: string, extension: string) {
-    let name = audioPath.replace('.wav', '_').slice(audioPath.lastIndexOf('/')+1);
-    return FEATURE_FOLDER + name + featureName + extension;
+    let name = util.getWavName(audioPath);
+    return FEATURE_FOLDER + name + '_' + featureName + extension;
   }
 
-  private execute(command: string): Promise<any> {
-    return new Promise((resolve, reject) =>
-      exec(command, (error, stdout, stderr) => {
-        if (error) {
-          console.log(error, stderr);
-          reject();
-        } else {
-          resolve();
-        }
-      })
-    )
-  }
-
-  async getFragmentsAndSummarizedFeatures(path: string, fragmentLength?: number): Promise<Fragment[]> {
+  async getFragmentsAndSummarizedFeatures(observer: ProgressObserver, path: string, fragmentLength?: number): Promise<Fragment[]> {
+    observer.updateProgress("summarizing features", 0);
     var files = fs.readdirSync(FEATURE_FOLDER);
-    var name = path.replace('.wav', '').slice(path.lastIndexOf('/')+1);
+    var name = util.getWavName(path);
     //take files that match file name and active features
     files = files.filter(f => f.indexOf(name+'_') == 0);
     files = files.filter(f => FEATURE_NAMES.indexOf(f.slice(f.lastIndexOf('_')+1, f.lastIndexOf('.'))) >= 0);
@@ -78,10 +62,10 @@ export class FeatureService {
     if (isNaN(fragmentLength)) {
       var segmentationFiles = files.filter(f => f.indexOf('onsets') >= 0 || f.indexOf('beats') >= 0);
       featureFiles = files.filter(f => segmentationFiles.indexOf(f) < 0);
-      fragments = await this.getEventsWithDuration(segmentationFiles[0], path);
+      fragments = await this.createFragmentsFromFeature(segmentationFiles[0], path);
     } else {
       featureFiles = files.filter(f => f.indexOf('onsets') < 0 && f.indexOf('beats') < 0);
-      fragments = this.createFragments(featureFiles[0], fragmentLength);
+      fragments = this.createEqualFragments(featureFiles[0], fragmentLength);
     }
     for (let i = 0; i < featureFiles.length; i++) {
       this.addSummarizedFeature(featureFiles[i], fragments);
@@ -105,10 +89,11 @@ export class FeatureService {
         f.vector = f.vector.map((e,j) => stds[j] != 0 ? (e-means[j])/stds[j] : e-means[j])
       );
     }
+    observer.updateProgress("summarizing features", 1);
     return fragments;
   }
 
-  private createFragments(featurepath: string, fragmentLength: number): Fragment[] {
+  private createEqualFragments(featurepath: string, fragmentLength: number): Fragment[] {
     var json = this.readJsonSync(featurepath);
     var events: Fragment[] = [];
     var fileName = json["file_metadata"]["identifiers"]["filename"];
@@ -120,12 +105,13 @@ export class FeatureService {
     return events;
   }
 
-  private async getEventsWithDuration(path: string, audioFile: string): Promise<Fragment[]> {
-    var fileDuration = await this.getWavDuration(audioFile);
+  private async createFragmentsFromFeature(path: string, audioFile: string): Promise<Fragment[]> {
+    var fileDuration = await util.getWavDuration(audioFile);
     var events: Fragment[] = [];
     var onsets: number[];
     if (FEATURE_SELECTION.indexOf(FEATURES.madmomOnset) >= 0) {
       onsets = fs.readFileSync(path, 'utf8').split('\n').map(s => parseFloat(s));
+      onsets = onsets.slice(0, -1);
     } else {
       var json = this.readJsonSync(path);
       //fileDuration = json["file_metadata"]["duration"];
@@ -134,23 +120,11 @@ export class FeatureService {
     if (onsets[0] > 0) {
       events.push(this.createFragment(0, audioFile, onsets[0]));
     }
-    for (var i = 0; i < onsets.length; i++) {
-      var duration = i<onsets.length-1 ? onsets[i+1]-onsets[i] : fileDuration-onsets[i];
-      events.push(this.createFragment(onsets[i], audioFile, duration));
-    }
+    onsets.forEach((o,i) => {
+      let duration = i<onsets.length-1 ? onsets[i+1]-o : fileDuration-o;
+      events.push(this.createFragment(o, audioFile, duration));
+    });
     return events;
-  }
-
-  private getWavDuration(path: string): Promise<number> {
-    return new Promise((resolve, reject) =>
-      wav.infoByFilename(path, (err, info) => {
-        if (err) {
-          reject(err);
-        } else {
-          resolve(info.duration);
-        }
-      })
-    );
   }
 
   private createFragment(time: number, fileUri: string, duration: number): Fragment {
