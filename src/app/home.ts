@@ -4,6 +4,7 @@ import { FeatureService } from './services/feature-service';
 import { AudioService } from './services/audio-service';
 import { ApiService } from './services/api-service';
 import { Record, Fragment, ProgressObserver } from './types';
+import * as uuidv4 from 'uuid/v4';
 
 @Component({
   selector: 'page-home',
@@ -44,15 +45,20 @@ export class HomePage implements ProgressObserver {
   }
 
   private async archiveFile(audioFile: string) {
+    //const uid = uuidv4();
+    console.log(uuidv4());
     this.setStatus("extracting features");
     await this.features.extractFeatures(audioFile, this).catch(alert);
     this.setStatus("aggregating and summarizing features");
     const fragments = await this.features.getFragmentsAndSummarizedFeatures(this, audioFile);
     const record = this.createRecord(fragments);
     this.setStatus("splitting audio");
-    await this.audio.splitWavFile(audioFile, fragments, this).catch(alert);
+    const filenames = await this.audio.splitWavFile(audioFile, fragments, this);
+    console.log(filenames)
     this.setStatus("posting record to api");
     await this.apiService.postRecord(record).catch(alert);
+    this.setStatus("uploading to audio store");
+    await this.apiService.scpWavToAudioStore(filenames, this).catch(alert);  
     this.setStatus("done!");
   }
 
