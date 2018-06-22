@@ -1,5 +1,6 @@
 import { exec } from 'child_process';
 import * as wav from 'wav-file-info';
+import * as uuidv4 from 'uuid/v4';
 
 export function execute(command: string): Promise<any> {
   return new Promise((resolve, reject) =>
@@ -15,7 +16,9 @@ export function execute(command: string): Promise<any> {
 }
 
 export function getWavName(path: string): string {
+  console.log(path.slice(path.lastIndexOf('/')+1).replace('.wav', ''));
   return path.slice(path.lastIndexOf('/')+1).replace('.wav', '');
+  //return uuidv4()+'.wav'; //path.slice(path.lastIndexOf('/')+1).replace('.wav', '');
 }
 
 export function getWavDuration(path: string): Promise<number> {

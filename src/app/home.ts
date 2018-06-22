@@ -5,6 +5,8 @@ import { AudioService } from './services/audio-service';
 import { ApiService } from './services/api-service';
 import { Record, Fragment, ProgressObserver } from './types';
 import * as uuidv4 from 'uuid/v4';
+import * as fs from 'fs';
+import * as constants from './constants';
 
 @Component({
   selector: 'page-home',
@@ -40,25 +42,32 @@ export class HomePage implements ProgressObserver {
 
   async archive() {
     if (this.chosenFile) {
-      this.archiveFile(this.chosenFile).catch(alert);
+      this.archiveFile(this.chosenFile);//.catch(alert);
     }
   }
 
   private async archiveFile(audioFile: string) {
-    //const uid = uuidv4();
-    console.log(uuidv4());
+
+    const sideuid = uuidv4();
+
+    if (!fs.existsSync(constants.SOUND_OBJECTS_FOLDER+sideuid)){
+        fs.mkdirSync(constants.SOUND_OBJECTS_FOLDER+sideuid);
+    }
+
     this.setStatus("extracting features");
-    await this.features.extractFeatures(audioFile, this).catch(alert);
+    await this.features.extractFeatures(audioFile, this);//.catch(alert);
     this.setStatus("aggregating and summarizing features");
     const fragments = await this.features.getFragmentsAndSummarizedFeatures(this, audioFile);
     const record = this.createRecord(fragments);
     this.setStatus("splitting audio");
-    const filenames = await this.audio.splitWavFile(audioFile, fragments, this);
+    //const filenames = await this.audio.splitWavFile(audioFile, sideuid, fragments, this);
+    const filenames = await this.audio.splitWavFile(audioFile, sideuid, fragments, this);
     console.log(filenames)
     this.setStatus("posting record to api");
     await this.apiService.postRecord(record).catch(alert);
     this.setStatus("uploading to audio store");
-    await this.apiService.scpWavToAudioStore(filenames, this).catch(alert);  
+    //await this.apiService.scpWavToAudioStore(filenames, this).catch(alert); 
+    await this.apiService.scpWavToAudioStore(constants.SOUND_OBJECTS_FOLDER+sideuid, this);//.catch(alert);  
     this.setStatus("done!");
   }
 

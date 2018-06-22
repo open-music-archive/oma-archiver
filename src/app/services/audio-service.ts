@@ -1,17 +1,20 @@
 import { Injectable } from '@angular/core';
 import { Fragment, ProgressObserver } from '../types';
 import * as util from './util';
+import * as uuidv4 from 'uuid/v4';
+import * as constants from '../constants';
 
-const CHUNKS_FOLDER = './chunks/'; //uuidv4(); //'./chunks/';
 
 
 @Injectable()
 export class AudioService {
 
-  splitWavFile(input: string, fragments: Fragment[], observer: ProgressObserver): Promise<string[]> {
+  splitWavFile(input: string, sideuid: string, fragments: Fragment[], observer: ProgressObserver): Promise<string[]> {
     observer.updateProgress("splitting audio files", 0);
     return Promise.all(fragments.map(async (f,i) => {
-      const output = CHUNKS_FOLDER+util.getWavName(input)+'_'+i+'.wav';
+      console.log(sideuid);	
+      //const output = SOUND_OBJECTS_FOLDER+sideuid+'/'+util.getWavName(input)+'_'+i+'.wav';
+      const output = constants.SOUND_OBJECTS_FOLDER+sideuid+'/'+uuidv4()+'.wav';
       await util.execute('sox '+input+' '+output+' trim '+f.time+' '+f.duration);
       observer.updateProgress("splitting audio files", (i+1)/fragments.length);
       return output;

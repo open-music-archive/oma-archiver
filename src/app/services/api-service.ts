@@ -24,12 +24,10 @@ export class ApiService {
     return text ? JSON.parse(text) : null;
   }
 
-  async scpWavToAudioStore(paths: string[], observer: ProgressObserver): Promise<any> {
+  async scpWavToAudioStore(path: string, observer: ProgressObserver): Promise<any> {
     observer.updateProgress("uploading files to audio store", 0);
-    for (let i = 0; i < paths.length; i++) { 
-        //await util.execute('sshpass -p '+config.ftppassword+' scp '+paths[i]+' '+config.ftpusername+':');
-      observer.updateProgress("uploading files to audio store", (i+1)/paths.length);
-    }
+    console.log('sshpass -p '+config.ftppassword+' scp -r '+path+' '+config.ftpusername+':');
+    await util.execute('sshpass -p '+config.ftppassword+' scp -r '+path+' '+config.ftpusername+':');
   }
 
   /*private getJsonFromApi(path: string, params?: {}): Promise<any> {
