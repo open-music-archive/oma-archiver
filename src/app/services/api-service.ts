@@ -1,15 +1,15 @@
 import { Injectable } from '@angular/core';
-import { Record } from '../types';
+import { RecordSide } from '../types';
 import * as config from './config';
 import * as util from './util';
-import { ProgressObserver } from '../types';
+import { ProgressObserver } from '../home';
 
 @Injectable()
 export class ApiService {
 
   private API_URL = "http://localhost:8060/";//"https://play-it-again.herokuapp.com/";
 
-  postRecord(record: Record) {
+  postRecord(record: RecordSide) {
     return this.postJsonToApi('record', record);
   }
 

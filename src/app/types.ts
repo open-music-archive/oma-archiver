@@ -1,19 +1,20 @@
-export interface Record {
+export interface RecordSide {
   title: string,
   composer: string,
   artist: string,
-  id: string,
+  catNo: string,
   label: string,
   side: string,
-  soundObjects: Fragment[]
+  soundObjects: SoundObject[]
 }
 
-export interface Fragment {
+export interface SoundObject {
   time: number,
   duration: number,
-  vector: number[],
-  fileUri: string,
-  features: FeatureSummary[]
+  normalFeatures: number[],
+  audioUri: string,
+  features: FeatureSummary[],
+  featureGuid: string
 }
 
 export interface FeatureSummary {
@@ -22,6 +23,15 @@ export interface FeatureSummary {
   var: number | number[]
 }
 
-export interface ProgressObserver {
-  updateProgress(task: string, progress?: number): void //progress in [0,1]
+export interface Clustering {
+  features: string[],
+  method: string,
+  clusters: Cluster[]
+}
+
+export interface Cluster {
+  name: string,
+  signalsAdd: string[],
+  signalsDelete: string[],
+  centroid: number[]
 }

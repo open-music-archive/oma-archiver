@@ -2,7 +2,8 @@ import { Injectable } from '@angular/core';
 import * as fs from 'fs';
 import * as bb from 'bluebird';
 import * as math from 'mathjs';
-import { Fragment, ProgressObserver } from '../types';
+import { SoundObject } from '../types';
+import { ProgressObserver } from '../home';
 import * as util from './util';
 
 const FEATURE_FOLDER = './features/';
@@ -46,7 +47,7 @@ export class FeatureService {
     return FEATURE_FOLDER + name + '_' + featureName + extension;
   }
 
-  async getFragmentsAndSummarizedFeatures(observer: ProgressObserver, path: string, fragmentLength?: number): Promise<Fragment[]> {
+  async getFragmentsAndSummarizedFeatures(observer: ProgressObserver, path: string, fragmentLength?: number): Promise<SoundObject[]> {
     observer.updateProgress("summarizing features", 0);
     var files = fs.readdirSync(FEATURE_FOLDER);
     var name = util.getWavName(path);
@@ -58,7 +59,7 @@ export class FeatureService {
       //incomplete feature files, return no fragments
       return [];
     }
-    var fragments: Fragment[], featureFiles: string[];
+    var fragments: SoundObject[], featureFiles: string[];
     if (isNaN(fragmentLength)) {
       var segmentationFiles = files.filter(f => f.indexOf('onsets') >= 0 || f.indexOf('beats') >= 0);
       featureFiles = files.filter(f => segmentationFiles.indexOf(f) < 0);
@@ -73,29 +74,29 @@ export class FeatureService {
     //remove all fragments that contain undefined features
     for (let i = fragments.length-1; i >= 0; i--) {
       //console.log(fragments[i]["vector"].length);
-      if (fragments[i].vector.filter(v => v === undefined).length > 0) {
+      if (fragments[i].normalFeatures.filter(v => v === undefined).length > 0) {
         fragments.splice(i, 1);
       }
     }
     if (fragments.length > 1) {
       //standardize the vectors
-      var vectors = fragments.map(f => f.vector);
+      var vectors = fragments.map(f => f.normalFeatures);
       var transposed = math.transpose(vectors);
       var means = transposed.map(v => math.mean(v));
       var stds = transposed.map(v => math.std(v));
       //transposed = transposed.map(function(v,i){return v.map(function(e){return (e-means[i])/stds[i];})});
       //iterate backwards by making reverse shallow copy
       fragments.slice().reverse().forEach(f =>
-        f.vector = f.vector.map((e,j) => stds[j] != 0 ? (e-means[j])/stds[j] : e-means[j])
+        f.normalFeatures = f.normalFeatures.map((e,j) => stds[j] != 0 ? (e-means[j])/stds[j] : e-means[j])
       );
     }
     observer.updateProgress("summarizing features", 1);
     return fragments;
   }
 
-  private createEqualFragments(featurepath: string, fragmentLength: number): Fragment[] {
+  private createEqualFragments(featurepath: string, fragmentLength: number): SoundObject[] {
     var json = this.readJsonSync(featurepath);
-    var events: Fragment[] = [];
+    var events: SoundObject[] = [];
     var fileName = json["file_metadata"]["identifiers"]["filename"];
     var fileDuration = json["file_metadata"]["duration"];
     for (var i = 0; i < fileDuration; i+=fragmentLength) {
@@ -105,9 +106,9 @@ export class FeatureService {
     return events;
   }
 
-  private async createFragmentsFromFeature(path: string, audioFile: string): Promise<Fragment[]> {
+  private async createFragmentsFromFeature(path: string, audioFile: string): Promise<SoundObject[]> {
     var fileDuration = await util.getWavDuration(audioFile);
-    var events: Fragment[] = [];
+    var events: SoundObject[] = [];
     var onsets: number[];
     if (FEATURE_SELECTION.indexOf(FEATURES.madmomOnset) >= 0) {
       onsets = fs.readFileSync(path, 'utf8').split('\n').map(s => parseFloat(s));
@@ -127,11 +128,11 @@ export class FeatureService {
     return events;
   }
 
-  private createFragment(time: number, fileUri: string, duration: number): Fragment {
-    return {time: time, duration: duration, vector: [], fileUri: fileUri, features: []};
+  private createFragment(time: number, fileUri: string, duration: number): SoundObject {
+    return {time: time, duration: duration, normalFeatures: [], featureGuid: undefined, audioUri: fileUri, features: []};
   }
 
-  private addSummarizedFeature(path: string, fragments: Fragment[]) {
+  private addSummarizedFeature(path: string, fragments: SoundObject[]) {
     var json = this.readJsonSync(path);
     var featureName = json["annotations"][0]["annotation_metadata"]["annotator"]["output_id"];
     var data = json["annotations"][0]["data"];
@@ -154,7 +155,7 @@ export class FeatureService {
         mean: means,
         var: vars,
       });
-      f.vector = f.vector.concat(Array.isArray(means) ? means : [means]); //see with just means
+      f.normalFeatures = f.normalFeatures.concat(Array.isArray(means) ? means : [means]); //see with just means
     });
   }
 

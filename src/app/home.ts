@@ -3,10 +3,14 @@ import { ElectronService } from './services/electron-service';
 import { FeatureService } from './services/feature-service';
 import { AudioService } from './services/audio-service';
 import { ApiService } from './services/api-service';
-import { Record, Fragment, ProgressObserver } from './types';
+import { RecordSide, SoundObject } from './types';
 import * as uuidv4 from 'uuid/v4';
 import * as fs from 'fs';
 import * as constants from './constants';
+
+export interface ProgressObserver {
+  updateProgress(task: string, progress?: number): void //progress in [0,1]
+}
 
 @Component({
   selector: 'page-home',
@@ -64,19 +68,20 @@ export class HomePage implements ProgressObserver {
     const filenames = await this.audio.splitWavFile(audioFile, sideuid, fragments, this);
     console.log(filenames)
     this.setStatus("posting record to api");
+    console.log(record)
     await this.apiService.postRecord(record).catch(alert);
     this.setStatus("uploading to audio store");
-    //await this.apiService.scpWavToAudioStore(filenames, this).catch(alert); 
-    await this.apiService.scpWavToAudioStore(constants.SOUND_OBJECTS_FOLDER+sideuid, this);//.catch(alert);  
+    //await this.apiService.scpWavToAudioStore(filenames, this).catch(alert);
+    await this.apiService.scpWavToAudioStore(constants.SOUND_OBJECTS_FOLDER+sideuid, this);//.catch(alert);
     this.setStatus("done!");
   }
 
-  private createRecord(fragments: Fragment[]): Record {
+  private createRecord(fragments: SoundObject[]): RecordSide {
     return {
       title: this.title,
       composer: this.composer,
       artist: this.artist,
-      id: this.recordId,
+      catNo: this.recordId,
       label: this.label,
       side: this.side,
       soundObjects: fragments
