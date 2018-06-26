@@ -38,3 +38,5 @@ package-lock.json
 audio
 features
 sound-objects
+
+src/app/services/config.ts
