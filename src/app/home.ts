@@ -61,17 +61,16 @@ export class HomePage implements ProgressObserver {
     this.setStatus("extracting features");
     await this.features.extractFeatures(audioFile, this);//.catch(alert);
     this.setStatus("aggregating and summarizing features");
-    const fragments = await this.features.getFragmentsAndSummarizedFeatures(this, audioFile);
-    const record = this.createRecord(fragments);
+    const objects = await this.features.getFragmentsAndSummarizedFeatures(this, audioFile);
     this.setStatus("splitting audio");
-    //const filenames = await this.audio.splitWavFile(audioFile, sideuid, fragments, this);
-    const filenames = await this.audio.splitWavFile(audioFile, sideuid, fragments, this);
+    const filenames = await this.audio.splitWavFile(audioFile, sideuid, objects, this);
     console.log(filenames)
+    this.updateAudioUris(objects, sideuid, filenames);
     this.setStatus("posting record to api");
+    const record = this.createRecord(objects);
     console.log(record)
     await this.apiService.postRecord(record).catch(alert);
     this.setStatus("uploading to audio store");
-    //await this.apiService.scpWavToAudioStore(filenames, this).catch(alert);
     await this.apiService.scpWavToAudioStore(constants.SOUND_OBJECTS_FOLDER+sideuid, this);//.catch(alert);
     this.setStatus("done!");
   }
@@ -86,6 +85,11 @@ export class HomePage implements ProgressObserver {
       side: this.side,
       soundObjects: fragments
     }
+  }
+
+  private updateAudioUris(objects: SoundObject[], sideuid: string, fileuids: string[]) {
+    objects.forEach((o,i) =>
+      o.audioUri = fileuids[i].replace(constants.SOUND_OBJECTS_FOLDER, constants.AUDIO_SERVER_PATH));
   }
 
   private setStatus(status: string) {

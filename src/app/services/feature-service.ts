@@ -101,7 +101,7 @@ export class FeatureService {
     var fileDuration = json["file_metadata"]["duration"];
     for (var i = 0; i < fileDuration; i+=fragmentLength) {
       var duration = i+fragmentLength>fileDuration ? fileDuration-i : fragmentLength;
-      events.push(this.createFragment(i, fileName, duration));
+      events.push(this.createFragment(i, duration));
     }
     return events;
   }
@@ -119,17 +119,17 @@ export class FeatureService {
       onsets = json["annotations"][0]["data"].map(o => o["time"]);
     }
     if (onsets[0] > 0) {
-      events.push(this.createFragment(0, audioFile, onsets[0]));
+      events.push(this.createFragment(0, onsets[0]));
     }
     onsets.forEach((o,i) => {
       let duration = i<onsets.length-1 ? onsets[i+1]-o : fileDuration-o;
-      events.push(this.createFragment(o, audioFile, duration));
+      events.push(this.createFragment(o, duration));
     });
     return events;
   }
 
-  private createFragment(time: number, fileUri: string, duration: number): SoundObject {
-    return {time: time, duration: duration, normalFeatures: [], featureGuid: undefined, audioUri: fileUri, features: []};
+  private createFragment(time: number, duration: number): SoundObject {
+    return {time: time, duration: duration, normalFeatures: [], featureGuid: undefined, audioUri: undefined, features: []};
   }
 
   private addSummarizedFeature(path: string, fragments: SoundObject[]) {
