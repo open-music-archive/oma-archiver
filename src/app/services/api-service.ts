@@ -26,7 +26,6 @@ export class ApiService {
 
   async scpWavToAudioStore(path: string, observer: ProgressObserver): Promise<any> {
     observer.updateProgress("uploading files to audio store", 0);
-    console.log('sshpass -p '+config.ftppassword+' scp -r '+path+' '+config.ftpusername+':');
     await util.execute('sshpass -p '+config.ftppassword+' scp -r '+path+' '+config.ftpusername+':');
   }
 

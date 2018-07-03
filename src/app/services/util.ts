@@ -5,7 +5,6 @@ export function execute(command: string): Promise<any> {
   return new Promise((resolve, reject) =>
     exec(command, (error, stdout, stderr) => {
       if (error) {
-        console.log(error, stderr);
         reject('failed to execute "'+command+'": '+JSON.stringify(error));
       } else {
         resolve();
@@ -15,7 +14,6 @@ export function execute(command: string): Promise<any> {
 }
 
 export function getWavName(path: string): string {
-  //console.log(path.slice(path.lastIndexOf('/')+1).replace('.wav', ''));
   return path.slice(path.lastIndexOf('/')+1).replace('.wav', '');
 }
 
