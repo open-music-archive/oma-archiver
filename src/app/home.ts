@@ -78,7 +78,7 @@ export class HomePage implements ProgressObserver {
 
     this.setStatus("clustering sound objects");
     const clustering = await new Clusterer(this.apiService).cluster(0.05);
-    await this.apiService.scpWavToAudioStore(constants.SOUND_OBJECTS_FOLDER+sideuid, this);//.catch(alert);
+    //await this.apiService.postClustering(clustering).catch(alert);
 
     this.setStatus("done!");
   }
