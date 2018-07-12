@@ -5,7 +5,11 @@ export interface RecordSide {
   catNo: string,
   label: string,
   side: string,
-  soundObjects: SoundObject[]
+  soundObjects: SoundObject[],
+  imageUri: string,
+  time: string,
+  eq: string,
+  noEqAudioFile: string
 }
 
 export interface SoundObject {
@@ -31,7 +35,17 @@ export interface Clustering {
 
 export interface Cluster {
   name: string,
-  signalsAdd: string[],
-  signalsDelete: string[],
-  centroid: number[]
+  signals: string[],
+  centroid: string
+}
+
+export interface DbSoundObject {
+  _id: string,
+  duration: number,
+  audioUri: string
+}
+
+export interface DbSoundObjectFeatures extends DbSoundObject {
+  normalFeatures: number[],
+  features: FeatureSummary[]
 }

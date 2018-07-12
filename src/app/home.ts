@@ -3,6 +3,7 @@ import { ElectronService } from './services/electron-service';
 import { FeatureService } from './services/feature-service';
 import { AudioService } from './services/audio-service';
 import { ApiService } from './services/api-service';
+import { Clusterer } from './services/clusterer';
 import { RecordSide, SoundObject } from './types';
 import * as uuidv4 from 'uuid/v4';
 import * as fs from 'fs';
@@ -60,18 +61,25 @@ export class HomePage implements ProgressObserver {
 
     this.setStatus("extracting features");
     await this.features.extractFeatures(audioFile, this);//.catch(alert);
+
     this.setStatus("aggregating and summarizing features");
     const objects = await this.features.getFragmentsAndSummarizedFeatures(this, audioFile);
+
     this.setStatus("splitting audio");
     const filenames = await this.audio.splitWavFile(audioFile, sideuid, objects, this);
-    console.log(filenames)
     this.updateAudioUris(objects, sideuid, filenames);
+
     this.setStatus("posting record to api");
     const record = this.createRecord(objects);
-    console.log(record)
-    await this.apiService.postRecord(record).catch(alert);
+    //await this.apiService.postRecord(record).catch(alert);
+
     this.setStatus("uploading to audio store");
+    //await this.apiService.scpWavToAudioStore(constants.SOUND_OBJECTS_FOLDER+sideuid, this);//.catch(alert);
+
+    this.setStatus("clustering sound objects");
+    const clustering = await new Clusterer(this.apiService).cluster(0.05);
     await this.apiService.scpWavToAudioStore(constants.SOUND_OBJECTS_FOLDER+sideuid, this);//.catch(alert);
+
     this.setStatus("done!");
   }
 
@@ -83,7 +91,11 @@ export class HomePage implements ProgressObserver {
       catNo: this.recordId,
       label: this.label,
       side: this.side,
-      soundObjects: fragments
+      soundObjects: fragments,
+      imageUri: null,
+      time: null,
+      eq: null,
+      noEqAudioFile: null
     }
   }
 

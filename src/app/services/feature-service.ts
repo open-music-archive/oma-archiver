@@ -97,7 +97,6 @@ export class FeatureService {
   private createEqualFragments(featurepath: string, fragmentLength: number): SoundObject[] {
     var json = this.readJsonSync(featurepath);
     var events: SoundObject[] = [];
-    var fileName = json["file_metadata"]["identifiers"]["filename"];
     var fileDuration = json["file_metadata"]["duration"];
     for (var i = 0; i < fileDuration; i+=fragmentLength) {
       var duration = i+fragmentLength>fileDuration ? fileDuration-i : fragmentLength;

@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { RecordSide } from '../types';
+import { RecordSide, Clustering, DbSoundObjectFeatures } from '../types';
 import * as config from './config';
 import * as util from './util';
 import { ProgressObserver } from '../home';
@@ -13,6 +13,19 @@ export class ApiService {
     return this.postJsonToApi('record', record);
   }
 
+  postClustering(clustering: Clustering) {
+    return this.postJsonToApi('clustering', clustering);
+  }
+
+  getFeatures(): Promise<DbSoundObjectFeatures[]> {
+    return this.getJsonFromApi('features');
+  }
+
+  async scpWavToAudioStore(path: string, observer: ProgressObserver): Promise<any> {
+    observer.updateProgress("uploading files to audio store", 0);
+    await util.execute('sshpass -p '+config.ftppassword+' scp -r '+path+' '+config.ftpusername+':');
+  }
+
   private async postJsonToApi(path: string, json: {}, params?: {}): Promise<string> {
     path = this.addParams(path, params);
     const response = await fetch(this.API_URL+path, {
@@ -24,18 +37,13 @@ export class ApiService {
     return text ? JSON.parse(text) : null;
   }
 
-  async scpWavToAudioStore(path: string, observer: ProgressObserver): Promise<any> {
-    observer.updateProgress("uploading files to audio store", 0);
-    await util.execute('sshpass -p '+config.ftppassword+' scp -r '+path+' '+config.ftpusername+':');
-  }
-
-  /*private getJsonFromApi(path: string, params?: {}): Promise<any> {
+  private getJsonFromApi(path: string, params?: {}): Promise<any> {
     path = this.addParams(path, params);
     return fetch(this.API_URL+path)
       .then(r => r.text())
       .then(t => JSON.parse(t))
       .catch(e => console.log(e));
-  }*/
+  }
 
   private addParams(path, params?: {}) {
     if (params) {
