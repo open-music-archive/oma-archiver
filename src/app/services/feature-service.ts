@@ -30,7 +30,7 @@ export class FeatureService {
   private async extractMadmomOnset(path: string) {
     const destination = this.getFeaturePath(path, FEATURES.madmomOnset, '.csv');
     if (!fs.existsSync(destination)) {
-      await util.execute('CNNOnsetDetector single '+path+' -o '+destination);
+      await util.execute('CNNOnsetDetector single "'+path+'" -o "'+destination+'"');
     }
   }
 

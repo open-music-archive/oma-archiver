@@ -8,6 +8,12 @@ import * as constants from '../constants';
 @Injectable()
 export class AudioService {
 
+  async resampleWavFile(infile: string, rate: number) {
+    const outfile = infile.replace('.wav',' ')+rate+'.wav';
+    await util.execute('sox "'+infile+'" -r '+rate+' "'+outfile+'"');
+    return outfile;
+  }
+
   splitWavFile(input: string, sideuid: string, fragments: SoundObject[], observer: ProgressObserver): Promise<string[]> {
     observer.updateProgress("splitting audio files", 0);
     return this.mapSeries(fragments, (async (f,i) => {
@@ -19,7 +25,7 @@ export class AudioService {
 
   private async trim(infile: string, sideuid: string, object: SoundObject): Promise<string> {
     const outfile = constants.SOUND_OBJECTS_FOLDER+sideuid+'/'+uuidv4()+'.wav';
-    await util.execute('sox '+infile+' '+outfile+' trim '+object.time+' '+object.duration)
+    await util.execute('sox "'+infile+'" '+outfile+' trim '+object.time+' '+object.duration)
     return outfile;
   }
 

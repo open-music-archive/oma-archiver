@@ -59,25 +59,30 @@ export class HomePage implements ProgressObserver {
         fs.mkdirSync(constants.SOUND_OBJECTS_FOLDER+sideuid);
     }
 
+    this.setStatus("resampling audio");
+    const resampledAudio = await this.audio.resampleWavFile(audioFile, 44100);
+
     this.setStatus("extracting features");
-    await this.features.extractFeatures(audioFile, this);//.catch(alert);
+    await this.features.extractFeatures(resampledAudio, this);//.catch(alert);
 
     this.setStatus("aggregating and summarizing features");
-    const objects = await this.features.getFragmentsAndSummarizedFeatures(this, audioFile);
+    const objects = await this.features.getFragmentsAndSummarizedFeatures(this, resampledAudio);
 
     this.setStatus("splitting audio");
-    const filenames = await this.audio.splitWavFile(audioFile, sideuid, objects, this);
+    const filenames = await this.audio.splitWavFile(resampledAudio, sideuid, objects, this);
     this.updateAudioUris(objects, sideuid, filenames);
 
     this.setStatus("posting record to api");
     const record = this.createRecord(objects);
+    //save record json till triple store is reliable
+    fs.writeFileSync(audioFile.replace('.wav','.json'), JSON.stringify(record, null, 2));
     //await this.apiService.postRecord(record).catch(alert);
 
     this.setStatus("uploading to audio store");
     //await this.apiService.scpWavToAudioStore(constants.SOUND_OBJECTS_FOLDER+sideuid, this);//.catch(alert);
 
     this.setStatus("clustering sound objects");
-    const clustering = await new Clusterer(this.apiService).cluster(0.05);
+    //const clustering = await new Clusterer(this.apiService).cluster(0.05);
     //await this.apiService.postClustering(clustering).catch(alert);
 
     this.setStatus("done!");
@@ -91,11 +96,11 @@ export class HomePage implements ProgressObserver {
       catNo: this.recordId,
       label: this.label,
       side: this.side,
-      soundObjects: fragments,
+      time: new Date(Date.now()).toString(),
       imageUri: null,
-      time: null,
       eq: null,
-      noEqAudioFile: null
+      noEqAudioFile: null,
+      soundObjects: fragments
     }
   }
 
