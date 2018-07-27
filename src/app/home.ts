@@ -1,13 +1,14 @@
 import { Component } from '@angular/core';
+import * as uuidv4 from 'uuid/v4';
+import * as fs from 'fs';
+import * as constants from './constants';
+import { RecordSide, SoundObject } from './types';
+import { mapSeries } from './services/util';
 import { ElectronService } from './services/electron-service';
 import { FeatureService } from './services/feature-service';
 import { AudioService } from './services/audio-service';
 import { ApiService } from './services/api-service';
 import { Clusterer } from './services/clusterer';
-import { RecordSide, SoundObject } from './types';
-import * as uuidv4 from 'uuid/v4';
-import * as fs from 'fs';
-import * as constants from './constants';
 
 export interface ProgressObserver {
   updateProgress(task: string, progress?: number): void //progress in [0,1]
@@ -82,8 +83,13 @@ export class HomePage implements ProgressObserver {
     //await this.apiService.scpWavToAudioStore(constants.SOUND_OBJECTS_FOLDER+sideuid, this);//.catch(alert);
 
     this.setStatus("clustering sound objects");
-    //const clustering = await new Clusterer(this.apiService).cluster(0.05);
-    //await this.apiService.postClustering(clustering).catch(alert);
+    const ratios = [0.01, 0.05];
+    mapSeries(ratios, async r => {
+      const clustering = await new Clusterer(this.apiService).cluster(r);
+      //const clustering = JSON.parse(fs.readFileSync('clusterings/clustering'+ratio+'.json', 'utf8'));
+      fs.writeFileSync('clusterings/clustering'+r+'.json', JSON.stringify(clustering, null, 2));
+      //return this.apiService.postClustering(clustering).catch(alert);
+    });
 
     this.setStatus("done!");
   }
