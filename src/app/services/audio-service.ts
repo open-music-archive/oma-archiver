@@ -14,7 +14,7 @@ export class AudioService {
     return outfile;
   }
 
-  async convertWavToFlac(infile: string, del: boolean) {
+  async convertWavToFlac(infile: string, del = false) {
     const outfile = infile.replace('.wav','.flac');
     if (del == true){
       await util.execute('flac --delete-input-file --best "'+infile+'"');
