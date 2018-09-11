@@ -14,6 +14,16 @@ export class AudioService {
     return outfile;
   }
 
+  async convertWavToFlac(infile: string, del: boolean) {
+    const outfile = infile.replace('.wav','.flac');
+    if (del == true){
+      await util.execute('flac --delete-input-file --best "'+infile+'"');
+    } else {
+      await util.execute('flac --best "'+infile+'"');
+    }
+    return outfile;
+  }
+
   splitWavFile(input: string, sideuid: string, fragments: SoundObject[], observer: ProgressObserver): Promise<string[]> {
     observer.updateProgress("splitting audio files", 0);
     return util.mapSeries(fragments, (async (f,i) => {
