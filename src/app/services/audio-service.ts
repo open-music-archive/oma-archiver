@@ -10,7 +10,8 @@ export class AudioService {
 
   async resampleWavFile(infile: string, rate: number) {
     const outfile = infile.replace('.wav',' ')+rate+'.wav';
-    await util.execute('sox "'+infile+'" -r '+rate+' "'+outfile+'"');
+    //await util.execute('sox "'+infile+'" -r '+rate+' "'+outfile+'"');
+    await util.execute('sox "'+infile+'" -G -b 16 "'+outfile+'" rate -v -L '+rate+' dither');
     return outfile;
   }
 

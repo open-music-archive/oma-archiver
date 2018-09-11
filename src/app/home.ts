@@ -63,6 +63,9 @@ export class HomePage implements ProgressObserver {
     this.setStatus("resampling audio");
     const resampledAudio = await this.audio.resampleWavFile(audioFile, 44100);
 
+    this.setStatus("converting to flac");
+    const flacFile = await this.audio.convertWavToFlac(audioFile, false); // false = do not delete wav audio
+
     this.setStatus("extracting features");
     await this.features.extractFeatures(resampledAudio, this);//.catch(alert);
 
@@ -76,7 +79,7 @@ export class HomePage implements ProgressObserver {
     this.setStatus("posting record to api");
     const record = this.createRecord(objects);
     //save record json till triple store is reliable
-    fs.writeFileSync(audioFile.replace('.wav','.json'), JSON.stringify(record, null, 2));
+    fs.writeFileSync(flacFile.replace('.flac','.json'), JSON.stringify(record, null, 2));
     //await this.apiService.postRecord(record).catch(alert);
 
     this.setStatus("uploading to audio store");
