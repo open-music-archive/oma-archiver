@@ -1,6 +1,8 @@
 import { exec } from 'child_process';
 import * as wav from 'wav-file-info';
 
+const PATH_LIMIT = 70;
+
 export function execute(command: string): Promise<any> {
   return new Promise((resolve, reject) =>
     exec(command, (error, stdout, stderr) => {
@@ -15,6 +17,14 @@ export function execute(command: string): Promise<any> {
 
 export function getWavName(path: string): string {
   return path.slice(path.lastIndexOf('/')+1).replace('.wav', '');
+}
+
+export function limitFileName(path: string): string {
+  if (path.length > PATH_LIMIT) {
+    var hlf = PATH_LIMIT / 2;
+    path = path.substring(0, hlf - 2) + " .. " + path.substring(hlf + 2);
+  }
+  return path;
 }
 
 export function getWavDuration(path: string): Promise<number> {

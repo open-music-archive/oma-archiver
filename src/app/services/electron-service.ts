@@ -7,11 +7,17 @@ export class ElectronService {
 
   constructor(public http: HttpClient) {}
 
-  chooseFile(): string {
+  chooseAudioFile(): string {
     const chosenFiles = electron.remote.dialog.showOpenDialog({
-      properties: ['openFile']
+      properties: ['openFile'], filters: [{name: 'WAV Files', extensions: ['wav']}]
     });
     return chosenFiles ? chosenFiles[0] : null;
   }
-
+  
+  chooseImageFile(): string {
+    const chosenFiles = electron.remote.dialog.showOpenDialog({
+      properties: ['openFile'], filters: [{name: 'JPG Files', extensions: ['jpg']}]
+    });
+    return chosenFiles ? chosenFiles[0] : null;
+  }
 }

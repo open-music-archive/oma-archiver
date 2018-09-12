@@ -40,8 +40,13 @@
     </ion-item>
 
     <ion-item>
-      <button item-left ion-button (click)="chooseFile()" color="light">File</button>
-      <ion-label>...{{chosenFile | slice:-37}}</ion-label>
+      <button item-left ion-button (click)="chooseAudioFile()" color="light">Audio</button>
+      <ion-label>{{audioFileName}}</ion-label>
+    </ion-item>
+
+    <ion-item>
+      <button item-left ion-button (click)="chooseImageFile()" color="light">Image</button>
+      <ion-label>{{imageFileName}}</ion-label>
     </ion-item>
 
   </ion-list>
