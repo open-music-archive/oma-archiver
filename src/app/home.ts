@@ -76,7 +76,10 @@ export class HomePage implements ProgressObserver {
     }
 
     this.setStatus("resampling audio");
-    const resampledAudio = await this.audio.resampleWavFile(audioFile, 44100);
+    const resampledAudio = await this.audio.resampleWavFile(audioFile, 44100, 16);
+
+    this.setStatus("converting to flac");
+    const flacFile = await this.audio.convertWavToFlac(audioFile, false); // false = do not delete wav audio
 
     this.setStatus("extracting features");
     await this.features.extractFeatures(resampledAudio, this);//.catch(alert);

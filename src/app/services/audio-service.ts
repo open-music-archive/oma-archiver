@@ -8,10 +8,19 @@ import * as constants from '../constants';
 @Injectable()
 export class AudioService {
 
-  async resampleWavFile(infile: string, rate: number) {
-    const outfile = infile.replace('.wav',' ')+rate+'.wav';
-    await util.execute('sox "'+infile+'" -r '+rate+' "'+outfile+'"');
+  async resampleWavFile(infile: string, samplerate: number, bitrate: number) {
+    const outfile = infile.replace('.wav',' ')+samplerate+ '_' +bitrate+ '.wav';
+    await util.execute('sox "'+infile+'" -G -b '+bitrate+' "'+outfile+'" rate -v -L '+samplerate+' dither');
     return outfile;
+  }
+
+  async convertWavToFlac(infile: string, del = false) {
+    if (del == true){
+      await util.execute('flac --delete-input-file --best "'+infile+'"');
+    } else {
+      await util.execute('flac --best "'+infile+'"');
+    }
+    return infile.replace('.wav','.flac');
   }
 
   splitWavFile(input: string, sideuid: string, fragments: SoundObject[], observer: ProgressObserver): Promise<string[]> {
