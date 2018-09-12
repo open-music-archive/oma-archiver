@@ -9,7 +9,7 @@ import * as constants from '../constants';
 export class AudioService {
 
   async resampleWavFile(infile: string, samplerate: number, bitrate: number) {
-    const outfile = infile.replace('.wav',' ')+samplerate+'_'+bitrate+ '.wav';
+    const outfile = infile.replace('.wav',' ')+samplerate+ '_' +bitrate+ '.wav';
     await util.execute('sox "'+infile+'" -G -b '+bitrate+' "'+outfile+'" rate -v -L '+samplerate+' dither');
     return outfile;
   }
