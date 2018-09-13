@@ -2,6 +2,7 @@ import { Component } from '@angular/core';
 import * as uuidv4 from 'uuid/v4';
 import * as fs from 'fs';
 import * as _ from 'lodash';
+import * as log from 'electron-log';
 import * as constants from './constants';
 import { RecordSide, SoundObject } from './types';
 import { mapSeries, limitFileName } from './services/util';
@@ -42,13 +43,14 @@ export class HomePage implements ProgressObserver {
     private features: FeatureService,
     private audio: AudioService,
     private apiService: ApiService
-  ) {}
+  ) {
+    log.transports.file.file = 'archiver.log';
+  }
 
   chooseAudioFile() {
     var newFile = this.electron.chooseAudioFile();
     if (newFile) {
       this.audioFilePath = newFile;
-      console.log(typeof newFile);
       this.audioFileName = limitFileName(newFile.split("/").pop());
     }
   }
@@ -69,7 +71,7 @@ export class HomePage implements ProgressObserver {
     }
     else
     {
-      this.archiveFile(this.audioFilePath, this.imageFilePath);//.catch(alert);
+      this.archiveFile(this.audioFilePath, this.imageFilePath).catch(err => this.logError(err));
     }
   }
 
@@ -97,7 +99,7 @@ export class HomePage implements ProgressObserver {
     // const flacFile = await this.audio.convertWavToFlac(audioFile, false); // false = do not delete wav audio
 
     this.setStatus("extracting features");
-    await this.features.extractFeatures(resampledAudio, this);//.catch(alert);
+    await this.features.extractFeatures(resampledAudio, this);
 
     this.setStatus("aggregating and summarizing features");
     var frags = await this.features.getFragmentsAndSummarizedFeatures(this, resampledAudio);
@@ -116,7 +118,7 @@ export class HomePage implements ProgressObserver {
 
     //save record json till triple store is reliable
     fs.writeFileSync(audioFile.replace('.wav','.json'), JSON.stringify(record, null, 2));
-    await this.apiService.postRecord(record).catch(alert);
+    // await this.apiService.postRecord(record).catch(alert);
 
     this.setStatus("uploading to audio store");
     await this.apiService.scpWavToAudioStore(constants.SOUND_OBJECTS_FOLDER+sideuid, this);//.catch(alert);
@@ -192,6 +194,10 @@ export class HomePage implements ProgressObserver {
       this.apiService.postClustering(result);//.catch(alert);
     });
     this.setStatus("");
+  }
+
+  private logError(error) {
+    log.error(error);
   }
 
 }

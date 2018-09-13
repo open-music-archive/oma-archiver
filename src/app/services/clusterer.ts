@@ -1,6 +1,6 @@
 import * as clusterfck from 'clusterfck';
 import { ApiService } from './api-service';
-import { Clustering, Cluster, DbSoundObjectFeatures } from '../types';
+import { Clustering, Cluster, DbSoundObjectFeatures, DbClustering } from '../types';
 
 const CLUSTER_LIMIT = null;// = 128;
 
@@ -19,7 +19,7 @@ export class Clusterer {
 
   /** clusterRatio is the proportional amount of clusters per sound object,
     * e.g. 0.1 is 1 cluster per 10 objects */
-  cluster(clusterRatio: number): Object {
+  cluster(clusterRatio: number): DbClustering {
 
     var clusterCount = Math.round(this.vectors.length*clusterRatio);
     if (CLUSTER_LIMIT) {
