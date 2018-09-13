@@ -175,10 +175,11 @@ export class HomePage implements ProgressObserver {
   }
 
   private clear() {
-    if (this.electron.displayQuestion("Are you sure you want to erase everything?") == 0)
+    if (this.electron.displayQuestion("Are you sure you want to clear everything?") == 0)
     {
       Object.getOwnPropertyNames(this).forEach(name => {
-        if (typeof(this[name] === 'string')) {
+        if (typeof(this[name]) === 'string') {
+            console.log(name, this[name]);
             this[name] = "";
         }
       })

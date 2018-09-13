@@ -11,44 +11,42 @@
 
     <ion-item>
       <ion-label>Title</ion-label>
-      <ion-input [(ngModel)]="title" type="text" value=""></ion-input>
+      <ion-input [(ngModel)]="title" type="text" value="" clearInput></ion-input>
     </ion-item>
 
     <ion-item>
       <ion-label>Composer</ion-label>
-      <ion-input [(ngModel)]="composer" type="text"></ion-input>
+      <ion-input [(ngModel)]="composer" type="text" clearInput></ion-input>
     </ion-item>
 
     <ion-item>
       <ion-label>Artist</ion-label>
-      <ion-input [(ngModel)]="artist" type="text"></ion-input>
+      <ion-input [(ngModel)]="artist" type="text" clearInput></ion-input>
     </ion-item>
 
     <ion-item>
       <ion-label>Record ID</ion-label>
-      <ion-input [(ngModel)]="recordId" type="text"></ion-input>
+      <ion-input [(ngModel)]="recordId" type="text" clearInput></ion-input>
     </ion-item>
 
     <ion-item>
       <ion-label>Side</ion-label>
-      <ion-input [(ngModel)]="side" type="text"></ion-input>
+      <ion-input [(ngModel)]="side" type="text" clearInput></ion-input>
     </ion-item>
 
     <ion-item>
       <ion-label>Label</ion-label>
-      <ion-input [(ngModel)]="label" type="text"></ion-input>
+      <ion-input [(ngModel)]="label" type="text" clearInput></ion-input>
     </ion-item>
 
     <ion-item>
       <button item-left ion-button (click)="chooseAudioFile()" color="light">Audio</button>
-      <ion-input [(ngModel)]="audioFileName" type="text" readonly></ion-input>
-      <!-- <ion-label>{{audioFileName}}</ion-label> -->
+      <ion-input [(ngModel)]="audioFileName" type="text" readonly clearInput></ion-input>
     </ion-item>
 
     <ion-item>
       <button item-left ion-button (click)="chooseImageFile()" color="light">Image</button>
       <ion-input [(ngModel)]="imageFileName" type="text" readonly clearInput></ion-input>
-      <!-- <ion-label>{{imageFileName}}</ion-label> -->
     </ion-item>
 
   </ion-list>
