@@ -4,12 +4,11 @@ import * as fs from 'fs';
 import * as _ from 'lodash';
 import * as constants from './constants';
 import { RecordSide, SoundObject } from './types';
-import { mapSeries, limitFileName } from './services/util';
+import { limitFileName } from './services/util';
 import { ElectronService } from './services/electron-service';
 import { FeatureService } from './services/feature-service';
 import { AudioService } from './services/audio-service';
 import { ApiService } from './services/api-service';
-import { Clusterer } from './services/clusterer';
 
 export interface ProgressObserver {
   updateProgress(task: string, progress?: number): void //progress in [0,1]
@@ -28,7 +27,6 @@ export class HomePage implements ProgressObserver {
   private label: string;
   private side: string;
   private imageUri: string;
-  private originalImage: string;
   private audioFilePath: string;
   private audioFileName: string = "...";
   private imageFilePath: string;
@@ -36,7 +34,7 @@ export class HomePage implements ProgressObserver {
   private status = "";
   private task = "";
   private progress = 0; //progress in [0,1]
-  private statusText = "";
+  private statusText: string = "";
 
   constructor(
     private electron: ElectronService,
@@ -46,15 +44,16 @@ export class HomePage implements ProgressObserver {
   ) {}
 
   chooseAudioFile() {
-    const newFile = this.electron.chooseAudioFile();
+    var newFile = this.electron.chooseAudioFile();
     if (newFile) {
       this.audioFilePath = newFile;
+      console.log(typeof newFile);
       this.audioFileName = limitFileName(newFile.split("/").pop());
     }
   }
 
   chooseImageFile() {
-    const newFile = this.electron.chooseImageFile();
+    var newFile = this.electron.chooseImageFile();
     if (newFile) {
       this.imageFilePath = newFile;
       this.imageFileName = limitFileName(newFile.split("/").pop());
@@ -62,9 +61,24 @@ export class HomePage implements ProgressObserver {
   }
 
   async archive() {
-    if (this.audioFilePath) {
+    var msg = this.validate();
+    if (msg)
+    {
+      this.electron.displayError(msg);
+    }
+    else
+    {
       this.archiveFile(this.audioFilePath, this.imageFilePath);//.catch(alert);
     }
+  }
+
+  validate(): string {
+    var error = "";
+    if (!this.title || this.title == "?") error = "Please enter a title.";
+    if (!this.audioFilePath) error = "Please select the audio recording.";
+    if (!this.composer || !this.artist || !this.recordId || !this.label || !this.side)
+      error = "Please fill in all fields, enter ? for missing information.";
+    return error;
   }
 
   private async archiveFile(audioFile: string, imageFile: string) {
@@ -78,8 +92,8 @@ export class HomePage implements ProgressObserver {
     this.setStatus("resampling audio");
     const resampledAudio = await this.audio.resampleWavFile(audioFile, 44100, 16);
 
-    this.setStatus("converting to flac");
-    const flacFile = await this.audio.convertWavToFlac(audioFile, false); // false = do not delete wav audio
+    // this.setStatus("converting to flac");
+    // const flacFile = await this.audio.convertWavToFlac(audioFile, false); // false = do not delete wav audio
 
     this.setStatus("extracting features");
     await this.features.extractFeatures(resampledAudio, this);//.catch(alert);
@@ -94,6 +108,7 @@ export class HomePage implements ProgressObserver {
 
     // copy renamed image file to the audio directory
     fs.copyFileSync(imageFile, constants.SOUND_OBJECTS_FOLDER+sideuid+"/"+sideuid+".jpg");
+    this.imageUri = constants.AUDIO_SERVER_PATH+sideuid+"/"+sideuid+".jpg";
 
     this.setStatus("posting record to api");
     const record = this.createRecord(sideuid, objects);
@@ -126,7 +141,7 @@ export class HomePage implements ProgressObserver {
       label: this.label,
       side: this.side,
       time: new Date(Date.now()).toString(),
-      imageUri: constants.AUDIO_SERVER_PATH+sideuid+"/"+sideuid+".jpg",
+      imageUri: this.imageUri,
       originalImage: this.imageFileName,
       eq: null,
       noEqAudioFile: null,
