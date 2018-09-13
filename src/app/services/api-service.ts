@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { RecordSide, Clustering, DbSoundObjectFeatures } from '../types';
+import { RecordSide, DbClustering, DbSoundObjectFeatures } from '../types';
 import * as config from './config';
 import * as util from './util';
 import { ProgressObserver } from '../home';
@@ -11,8 +11,8 @@ export class ApiService {
     return this.postJsonToApi('record', record);
   }
 
-  postClustering(clustering: Clustering) {
-    return this.postJsonToApi('clustering', clustering);
+  postClustering(clustering: DbClustering) {
+    this.postJsonToApi('clustering', clustering);
   }
 
   getFeatures(): Promise<DbSoundObjectFeatures[]> {

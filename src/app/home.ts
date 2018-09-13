@@ -4,11 +4,12 @@ import * as fs from 'fs';
 import * as _ from 'lodash';
 import * as constants from './constants';
 import { RecordSide, SoundObject } from './types';
-import { limitFileName } from './services/util';
+import { mapSeries, limitFileName } from './services/util';
 import { ElectronService } from './services/electron-service';
 import { FeatureService } from './services/feature-service';
 import { AudioService } from './services/audio-service';
 import { ApiService } from './services/api-service';
+import { Clusterer } from './services/clusterer';
 
 export interface ProgressObserver {
   updateProgress(task: string, progress?: number): void //progress in [0,1]
@@ -120,15 +121,6 @@ export class HomePage implements ProgressObserver {
     this.setStatus("uploading to audio store");
     await this.apiService.scpWavToAudioStore(constants.SOUND_OBJECTS_FOLDER+sideuid, this);//.catch(alert);
 
-    // this.setStatus("clustering sound objects");
-    // const ratios = [0.01, 0.05];
-    // mapSeries(ratios, async r => {
-    //   const clustering = await new Clusterer(this.apiService).cluster(r);
-    //   //const clustering = JSON.parse(fs.readFileSync('clusterings/clustering'+ratio+'.json', 'utf8'));
-    //   fs.writeFileSync('clusterings/clustering'+r+'.json', JSON.stringify(clustering, null, 2));
-    //   //return this.apiService.postClustering(clustering).catch(alert);
-    // });
-
     this.setStatus("done!");
   }
 
@@ -184,6 +176,22 @@ export class HomePage implements ProgressObserver {
         }
       })
     }
+  }
+
+  private async cluster() {
+    this.setStatus("clustering sound objects");
+    // const ratios = [0.01, 0.05];
+    var clusterer = new Clusterer(this.apiService);
+    await clusterer.init();
+    const opt = (Math.round(Math.sqrt(clusterer.vectors.length)) + 1) / clusterer.vectors.length;
+    const ratios = [ opt/4, opt, opt*4 ];
+    mapSeries(ratios, async r => {
+      this.setStatus("Clustering with " + r);
+      const result = clusterer.cluster(r);
+      fs.writeFileSync('clusterings/clustering'+r.toFixed(4)+'.json', JSON.stringify(result, null, 2));
+      this.apiService.postClustering(result);//.catch(alert);
+    });
+    this.setStatus("");
   }
 
 }

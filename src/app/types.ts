@@ -31,13 +31,19 @@ export interface FeatureSummary {
 export interface Clustering {
   features: string[],
   method: string,
-  clusters: Cluster[]
+  ratio: number,
+  size: number,
+  centroids: number[][]
 }
 
 export interface Cluster {
-  name: string,
-  signals: string[],
-  centroid: string
+  index: number,
+  signals: string[]
+}
+
+export interface DbClustering{
+  clustering: Clustering,
+  clusters: Cluster[]
 }
 
 export interface DbSoundObject {
