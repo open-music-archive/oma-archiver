@@ -41,17 +41,21 @@
 
     <ion-item>
       <button item-left ion-button (click)="chooseAudioFile()" color="light">Audio</button>
-      <ion-label>{{audioFileName}}</ion-label>
+      <ion-input [(ngModel)]="audioFileName" type="text" readonly></ion-input>
+      <!-- <ion-label>{{audioFileName}}</ion-label> -->
     </ion-item>
 
     <ion-item>
       <button item-left ion-button (click)="chooseImageFile()" color="light">Image</button>
-      <ion-label>{{imageFileName}}</ion-label>
+      <ion-input [(ngModel)]="imageFileName" type="text" readonly clearInput></ion-input>
+      <!-- <ion-label>{{imageFileName}}</ion-label> -->
     </ion-item>
 
   </ion-list>
 
-  <button ion-button (click)="archive()">Archive it!</button>
+  <button ion-button small color="light" (click)="clear()">Clear</button>
+  <button item-left ion-button (click)="archive()">Archive it!</button>
+
   <ion-label>{{ statusText }}</ion-label>
 
 

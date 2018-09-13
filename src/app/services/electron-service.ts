@@ -25,4 +25,13 @@ export class ElectronService {
     electron.remote.dialog.showErrorBox("Archiver", error);
   }
 
+  displayQuestion(question: string) {
+    return electron.remote.dialog.showMessageBox({
+      type: 'question',
+      title: 'Archiver',
+      message: question,
+      buttons: ["Yes", "No"]
+    })
+  }
+
 }

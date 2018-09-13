@@ -28,13 +28,13 @@ export class HomePage implements ProgressObserver {
   private side: string;
   private imageUri: string;
   private audioFilePath: string;
-  private audioFileName: string = "...";
+  private audioFileName: string;
   private imageFilePath: string;
-  private imageFileName: string = "...";
-  private status = "";
-  private task = "";
-  private progress = 0; //progress in [0,1]
+  private imageFileName: string;
+  private status: string = "";
+  private task: string = "";
   private statusText: string = "";
+  private progress: number = 0; //progress in [0,1]
 
   constructor(
     private electron: ElectronService,
@@ -172,6 +172,17 @@ export class HomePage implements ProgressObserver {
       progressText += this.task ? " ("+this.task+")" : "";
     }
     this.statusText = this.status+" "+progressText;
+  }
+
+  private clear() {
+    if (this.electron.displayQuestion("Are you sure you want to erase everything?") == 0)
+    {
+      Object.getOwnPropertyNames(this).forEach(name => {
+        if (typeof(this[name] === 'string')) {
+            this[name] = "";
+        }
+      })
+    }
   }
 
 }
