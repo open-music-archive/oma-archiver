@@ -118,7 +118,7 @@ export class HomePage implements ProgressObserver {
 
     //save record json till triple store is reliable
     fs.writeFileSync(audioFile.replace('.wav','.json'), JSON.stringify(record, null, 2));
-    // await this.apiService.postRecord(record).catch(alert);
+    await this.apiService.postRecord(record).catch(alert);
 
     this.setStatus("uploading to audio store");
     await this.apiService.scpWavToAudioStore(constants.SOUND_OBJECTS_FOLDER+sideuid, this);//.catch(alert);
