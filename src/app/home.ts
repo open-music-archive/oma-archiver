@@ -110,8 +110,8 @@ export class HomePage implements ProgressObserver {
     this.updateAudioUris(objects, sideuid, filenames);
 
     // copy renamed image file to the audio directory
-    fs.copyFileSync(imageFile, constants.SOUND_OBJECTS_FOLDER+sideuid+"/"+sideuid+".jpg");
-    this.imageUri = constants.AUDIO_SERVER_PATH+sideuid+"/"+sideuid+".jpg";
+    // fs.copyFileSync(imageFile, constants.SOUND_OBJECTS_FOLDER+sideuid+"/"+sideuid+".jpg");
+    // this.imageUri = constants.AUDIO_SERVER_PATH+sideuid+"/"+sideuid+".jpg";
 
     this.setStatus("posting record to api");
     const record = this.createRecord(sideuid, objects);
