@@ -56,3 +56,8 @@ export interface DbSoundObjectFeatures extends DbSoundObject {
   normalFeatures: number[],
   features: FeatureSummary[]
 }
+
+export interface ClusteringParameters {
+  clusteringID: ObjectID,
+  soundObject: SoundObject
+}

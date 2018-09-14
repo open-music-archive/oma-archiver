@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { RecordSide, DbClustering, DbSoundObjectFeatures } from '../types';
+import { RecordSide, DbClustering, DbSoundObjectFeatures, ClusteringParameters } from '../types';
 import * as config from './config';
 import * as util from './util';
 import { ProgressObserver } from '../home';
@@ -17,6 +17,10 @@ export class ApiService {
 
   getFeatures(): Promise<DbSoundObjectFeatures[]> {
     return this.getJsonFromApi('features');
+  }
+
+  classifySoundObject(parameters: ClusteringParameters): Promise<Cluster> {
+    return this.postJsonToApi('classify', parameters);
   }
 
   async scpWavToAudioStore(path: string, observer: ProgressObserver): Promise<any> {

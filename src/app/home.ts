@@ -109,9 +109,11 @@ export class HomePage implements ProgressObserver {
     const filenames = await this.audio.splitWavFile(resampledAudio, sideuid, objects, this);
     this.updateAudioUris(objects, sideuid, filenames);
 
-    // copy renamed image file to the audio directory
-    fs.copyFileSync(imageFile, constants.SOUND_OBJECTS_FOLDER+sideuid+"/"+sideuid+".jpg");
-    this.imageUri = constants.AUDIO_SERVER_PATH+sideuid+"/"+sideuid+".jpg";
+    // copy renamed image file to the audio directory if exists
+    if (imageFile) {
+      fs.copyFileSync(imageFile, constants.SOUND_OBJECTS_FOLDER+sideuid+"/"+sideuid+".jpg");
+      this.imageUri = constants.AUDIO_SERVER_PATH+sideuid+"/"+sideuid+".jpg";
+    }
 
     this.setStatus("posting record to api");
     const record = this.createRecord(sideuid, objects);
@@ -183,7 +185,6 @@ export class HomePage implements ProgressObserver {
   private reset() {
     Object.getOwnPropertyNames(this).forEach(name => {
       if (typeof(this[name]) === 'string') {
-          console.log(name, this[name]);
           this[name] = "";
       }
     })
@@ -203,6 +204,33 @@ export class HomePage implements ProgressObserver {
       // this.apiService.postClustering(result);//.catch(alert);
     });
     this.setStatus("");
+  }
+
+  private async classify() {
+    const sideuid = uuidv4();
+
+    this.setStatus("resampling audio");
+    const resampledAudio = await this.audio.resampleWavFile(this.audioFilePath, 44100, 16, sideuid);
+
+    this.setStatus("converting to flac");
+    const flacFile = await this.audio.convertWavToFlac(this.audioFilePath, sideuid, false); // false = do not delete wav audio
+
+    this.setStatus("extracting features");
+    await this.features.extractFeatures(resampledAudio, this);
+
+    this.setStatus("aggregating and summarizing features");
+    var frags = await this.features.getFragmentsAndSummarizedFeatures(this, resampledAudio);
+    const objects = _.shuffle(frags);
+
+    this.setStatus("classifying sound objects");
+
+    objects.forEach(sound => {
+      var params = { clusteringID: '5b9a9e36a869b0313d0d4c2a', soundObject: sound };
+      var cluster = this.apiService.classifySoundObject(params);
+      console.log(cluster)
+    })
+
+    this.setStatus("done");
   }
 
   private logError(error) {
