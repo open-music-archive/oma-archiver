@@ -13,7 +13,7 @@ import { ApiService } from './services/api-service';
 import { Clusterer } from './services/clusterer';
 
 export interface ProgressObserver {
-  updateProgress(task: string, progress?: number): void //progress in [0,1]
+  updateProgress(task: string, progress?: number): void
 }
 
 @Component({
@@ -71,7 +71,7 @@ export class HomePage implements ProgressObserver {
     }
     else
     {
-      this.archiveFile(this.audioFilePath, this.imageFilePath).catch(err => this.logError(err));
+      this.archiveFile(this.audioFilePath, this.imageFilePath);
     }
   }
 
@@ -118,14 +118,17 @@ export class HomePage implements ProgressObserver {
 
     //save record json till triple store is reliable
     //fs.writeFileSync(audioFile.replace('.wav','.json'), JSON.stringify(record, null, 2));
-    const jsonfile = './json/' + sideuid + '.json'; 
+    const jsonfile = './json/' + sideuid + '.json';
     fs.writeFileSync(jsonfile, JSON.stringify(record, null, 2));
     // await this.apiService.postRecord(record).catch(alert);
 
     this.setStatus("uploading to audio store");
-    await this.apiService.scpWavToAudioStore(constants.SOUND_OBJECTS_FOLDER+sideuid, this);//.catch(alert);
+    await this.apiService.scpWavToAudioStore(constants.SOUND_OBJECTS_FOLDER+sideuid, this).catch(err => this.logError(err));
 
     this.setStatus("done!");
+
+    // this.reset();
+
   }
 
   private createRecord(sideuid: string, fragments: SoundObject[]): RecordSide {
@@ -173,13 +176,17 @@ export class HomePage implements ProgressObserver {
   private clear() {
     if (this.electron.displayQuestion("Are you sure you want to clear everything?") == 0)
     {
-      Object.getOwnPropertyNames(this).forEach(name => {
-        if (typeof(this[name]) === 'string') {
-            console.log(name, this[name]);
-            this[name] = "";
-        }
-      })
+      this.reset()
     }
+  }
+
+  private reset() {
+    Object.getOwnPropertyNames(this).forEach(name => {
+      if (typeof(this[name]) === 'string') {
+          console.log(name, this[name]);
+          this[name] = "";
+      }
+    })
   }
 
   private async cluster() {
