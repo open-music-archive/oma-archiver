@@ -41,5 +41,6 @@ sound-objects
 clusterings
 flac
 downsampled
+json
 
 src/app/services/config.ts
