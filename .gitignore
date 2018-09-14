@@ -39,5 +39,7 @@ audio
 features
 sound-objects
 clusterings
+flac
+downsampled
 
 src/app/services/config.ts
