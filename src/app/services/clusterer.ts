@@ -31,7 +31,7 @@ export class Clusterer {
     //map vectors to object id
     const clusters = result.map(c => c.map(v => this.features[this.vectors.indexOf(v)]["_id"]));
     console.log("clustered " + this.vectors.length + " vectors into " + clusters.length + " clusters");
-    const clusterObjects: Cluster[] = clusters.map((c,i) => ({index: i, signals: c }));
+    const clusterObjects: Cluster[] = clusters.map((c,i) => ({index: i, signals: c, clusteringID: "" }));
 
     return {
       clustering: {

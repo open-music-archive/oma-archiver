@@ -4,7 +4,7 @@ import * as fs from 'fs';
 import * as _ from 'lodash';
 import * as log from 'electron-log';
 import * as constants from './constants';
-import { RecordSide, SoundObject } from './types';
+import { RecordSide, SoundObject, Cluster } from './types';
 import { mapSeries, limitFileName } from './services/util';
 import { ElectronService } from './services/electron-service';
 import { FeatureService } from './services/feature-service';
@@ -122,7 +122,7 @@ export class HomePage implements ProgressObserver {
     //fs.writeFileSync(audioFile.replace('.wav','.json'), JSON.stringify(record, null, 2));
     const jsonfile = './json/' + sideuid + '.json';
     fs.writeFileSync(jsonfile, JSON.stringify(record, null, 2));
-    // await this.apiService.postRecord(record).catch(alert);
+    await this.apiService.postRecord(record).catch(alert);
 
     this.setStatus("uploading to audio store");
     await this.apiService.scpWavToAudioStore(constants.SOUND_OBJECTS_FOLDER+sideuid, this).catch(err => this.logError(err));
@@ -201,9 +201,9 @@ export class HomePage implements ProgressObserver {
       this.setStatus("Clustering with " + r);
       const result = clusterer.cluster(r);
       fs.writeFileSync('clusterings/clustering'+r.toFixed(4)+'.json', JSON.stringify(result, null, 2));
-      // this.apiService.postClustering(result);//.catch(alert);
+      this.apiService.postClustering(result); //.catch(err => this.logError(err));
     });
-    this.setStatus("");
+    this.setStatus("done clustering!");
   }
 
   private async classify() {
@@ -211,9 +211,6 @@ export class HomePage implements ProgressObserver {
 
     this.setStatus("resampling audio");
     const resampledAudio = await this.audio.resampleWavFile(this.audioFilePath, 44100, 16, sideuid);
-
-    this.setStatus("converting to flac");
-    const flacFile = await this.audio.convertWavToFlac(this.audioFilePath, sideuid, false); // false = do not delete wav audio
 
     this.setStatus("extracting features");
     await this.features.extractFeatures(resampledAudio, this);
@@ -223,12 +220,15 @@ export class HomePage implements ProgressObserver {
     const objects = _.shuffle(frags);
 
     this.setStatus("classifying sound objects");
+    var params = { clusteringID: '5b9a9e36a869b0313d0d4c2a', soundObject: objects[0] };
+    var cluster = await this.apiService.classifySoundObject(params);
+    console.log(cluster);
 
-    objects.forEach(sound => {
-      var params = { clusteringID: '5b9a9e36a869b0313d0d4c2a', soundObject: sound };
-      var cluster = this.apiService.classifySoundObject(params);
-      console.log(cluster)
-    })
+    // objects.forEach(sound => {
+    //   var params = { clusteringID: '5b9a9e36a869b0313d0d4c2a', soundObject: sound };
+    //   var cluster = await this.apiService.classifySoundObject(params);
+    //   console.log(cluster);
+    // })
 
     this.setStatus("done");
   }

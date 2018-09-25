@@ -38,6 +38,7 @@ export interface Clustering {
 
 export interface Cluster {
   index: number,
+  clusteringID: string,
   signals: string[]
 }
 
@@ -58,6 +59,6 @@ export interface DbSoundObjectFeatures extends DbSoundObject {
 }
 
 export interface ClusteringParameters {
-  clusteringID: ObjectID,
+  clusteringID: string,
   soundObject: SoundObject
 }
